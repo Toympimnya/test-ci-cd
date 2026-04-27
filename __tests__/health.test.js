@@ -1,21 +1,10 @@
-const http = require("http");
+const request = require("supertest");
+const app = require("../server");
 
 describe("GET /health", () => {
-  test("returns healthy", (done) => {
-    const req = http.get("http://localhost:3000/health", (res) => {
-      let data = "";
-      res.on("data", (chunk) => {
-        data += chunk;
-      });
-      res.on("end", () => {
-        expect(res.statusCode).toBe(200);
-        expect(data).toContain("healthy");
-        done();
-      });
-    });
-
-    req.on("error", (err) => {
-      done(err);
-    });
+  test("returns healthy", async () => {
+    const response = await request(app).get("/health");
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toContain("healthy");
   });
 });

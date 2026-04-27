@@ -14,6 +14,10 @@ app.get("/health", (req, res) => {
   res.status(200).send("healthy");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server started at http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server started at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
