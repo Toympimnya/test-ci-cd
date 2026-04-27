@@ -150,6 +150,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [unit-tests, api-tests, ui-tests]
     if: always()
+    outputs:
+      report_url: ${{ steps.report-url.outputs.url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -190,6 +192,18 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./allure-report
 
+      - name: Publish report URL
+        id: report-url
+        run: |
+          URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Allure report URL: $URL"
+          {
+            echo "## Allure report"
+            echo ""
+            echo "Report URL: $URL"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   notify:
     name: Telegram notify
     runs-on: ubuntu-latest
@@ -199,10 +213,11 @@ jobs:
       - name: Set message text
         id: msg
         run: |
+          REPORT_URL="${{ needs.allure-report.outputs.report_url }}"
           if [ "${{ needs.unit-tests.result }}" = "success" ] && [ "${{ needs.api-tests.result }}" = "success" ] && [ "${{ needs.ui-tests.result }}" = "success" ]; then
-            echo "text=✅ CI passed for ${{ github.repository }} | run #${{ github.run_number }} | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+            echo "text=✅ CI passed for ${{ github.repository }} | Allure: ${REPORT_URL} | run #${{ github.run_number }} | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_OUTPUT"
           else
-            echo "text=❌ CI failed for ${{ github.repository }} | run #${{ github.run_number }} | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+            echo "text=❌ CI failed for ${{ github.repository }} | Allure: ${REPORT_URL} | run #${{ github.run_number }} | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Send Telegram notification
